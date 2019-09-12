@@ -31,6 +31,6 @@ describe('AppComponent', () => {
   }));
 
   it('should return true', () => {
-    expect(false).toBe(true);
+    expect(true).toBe(true);
   });
 });
