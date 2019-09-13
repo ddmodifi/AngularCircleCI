@@ -24,9 +24,9 @@ jobs:
       - run:
           name: Building
           command: |
-            if [ "${CIRCLE_BRANCH}" === "dev" ]; then
+            if [ "${CIRCLE_BRANCH}" == "dev" ]; then
                   ng build --env dev
-            elif [ "${CIRCLE_BRANCH}" === "master" ]; then
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
                   ng build --env prod
             else
                   ng build --env dev
