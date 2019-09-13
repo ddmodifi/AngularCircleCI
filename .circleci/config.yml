@@ -37,7 +37,7 @@ jobs:
           paths:
             - dist
   # the deploy job
-  deploy:
+  deploy_dev:
     working_directory: ~/my-project
     docker:
       - image: circleci/node:8-browsers
@@ -46,7 +46,8 @@ jobs:
           key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
       - aws-s3/sync:
           from: 'dist'
-          to: 's3://modifi-denise-test'
+          # to: 's3://modifi-denise-test' 
+          to: $BUCKET_NAME_DEV
           arguments: --delete
       # - run:
       #     name: Install AWS CLI
@@ -63,15 +64,31 @@ jobs:
       #       fi
   #     - run: 
   #         name: Invalidate cache
+  #         command: aws cloudfront create-invalidation --distribution-id $DIST_ID \
+  # --paths /index.html /error.html
+  deploy_master:
+    working_directory: ~/my-project
+    docker:
+      - image: circleci/node:8-browsers
+    steps:
+      - restore_cache:
+          key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+      - aws-s3/sync:
+          from: 'dist'
+          to: $BUCKET_NAME_DEV
+          # to: 's3://modifi-denise-test'
+          arguments: --delete
+  #     - run: 
+  #         name: Invalidate cache
   #         command: aws cloudfront create-invalidation --distribution-id S11A16G5KZMEQD \
   # --paths /index.html /error.html
 workflows:
   # version: 2
-  # the build and deploy workflow
+  # the build and deploy workflow dev
   build_and_deploy:
     jobs:
       - build
-      - deploy:
+      - deploy_dev:
           requires:
             # require build to pass before we can deploy
             - build
@@ -80,5 +97,13 @@ workflows:
                 only:
                   # only run on dev and master branches
                   - dev
+      - deploy_master:
+          requires:
+            # require build to pass before we can deploy
+            - build
+          filters:
+            branches:
+                only:
+                  # only run on dev and master branches
                   - master
   
