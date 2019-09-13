@@ -1,17 +1,55 @@
-version: 2
+version: 2.1
+orbs:
+  aws-s3: circleci/aws-s3@1.0.11
 jobs:
+  # the build job
   build:
     working_directory: ~/my-project
     docker:
       - image: circleci/node:8-browsers
     steps:
       - checkout
+      # pull node_modules from cache
       - restore_cache:
           key: AngularCircleCI-{{ .Branch }}-{{ checksum "package.json" }}
       - run: npm install
+      # cache the node_modules
       - save_cache:
           key: AngularCircleCI-{{ .Branch }}-{{ checksum "package.json" }}
           paths:
             - "node_modules"
       - run: npm run test -- --watch=false --progress=false --browsers=ChromeHeadlessCI
       - run: npm run e2e -- --protractor-config=./e2e/protractor-ci.conf.js
+      # build the project
+      - run:
+          name: Building
+          command: |
+            if [ "${CIRCLE_BRANCH}" === "dev" ]; then
+                  ng build --env dev
+            elif [ "${CIRCLE_BRANCH}" === "master" ]; then
+                  ng build --env prod
+            else
+                  ng build --env dev
+            fi
+      # cache dist folder for deploy job
+      - save_cache:
+          key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - dist
+  # the deploy job
+  deploy:
+    working_directory: ~/my-project
+    docker:
+      - image: circleci/node:8-browsers
+    steps:
+      # Restore cache from build job which has dist folder
+      - restore_cache
+        key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+workflows:
+  version: 2
+  # the build and deploy workflow
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy
+  
