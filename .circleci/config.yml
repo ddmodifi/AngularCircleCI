@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@1.0.11
+  aws-cli: circleci/aws-cli@0.1.16
 jobs:
   # the build job
   build:
@@ -46,26 +47,14 @@ jobs:
           key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
       - aws-s3/sync:
           from: 'dist'
-          # to: 's3://modifi-denise-test' 
           to: $BUCKET_NAME_DEV
           arguments: --delete
-      # - run:
-      #     name: Install AWS CLI
-      #     command: sudo apt-get -y -qq install awscli
+      - aws-cli/setup:
+              profile-name: default
       # - run: 
-      #     name: Deploy to s3
-      #     command: |
-      #       if [ "${CIRCLE_BRANCH}" == "dev" ]; then
-      #             aws --region us-west-2 s3 sync dist s3://modifi-denise-test --delete
-      #       elif [ "${CIRCLE_BRANCH}" == "master" ]; then
-      #             aws --region us-west-2 s3 sync dist s3://modifi-denise-test --delete
-      #       else
-      #             aws --region us-west-2 s3 sync dist s3://modifi-denise-test --delete
-      #       fi
-  #     - run: 
-  #         name: Invalidate cache
-  #         command: aws cloudfront create-invalidation --distribution-id $DIST_ID \
-  # --paths /index.html /error.html
+      #     name: Invalidate cache
+      #     command: aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_DEV \
+      #     --paths /*
   deploy_master:
     working_directory: ~/my-project
     docker:
@@ -75,13 +64,14 @@ jobs:
           key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
       - aws-s3/sync:
           from: 'dist'
-          to: $BUCKET_NAME_DEV
-          # to: 's3://modifi-denise-test'
+          to: $BUCKET_NAME_PROD
           arguments: --delete
-  #     - run: 
-  #         name: Invalidate cache
-  #         command: aws cloudfront create-invalidation --distribution-id S11A16G5KZMEQD \
-  # --paths /index.html /error.html
+      - aws-cli/setup:
+          profile-name: default
+      # - run: 
+      #     name: Invalidate cache
+      #     command: aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_PROD \
+      #     --paths /*
 workflows:
   # version: 2
   # the build and deploy workflow dev
