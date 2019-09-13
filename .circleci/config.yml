@@ -42,9 +42,8 @@ jobs:
     docker:
       - image: circleci/node:8-browsers
     steps:
-      # Restore cache from build job which has dist folder
-      - restore_cache
-        key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
 workflows:
   version: 2
   # the build and deploy workflow
