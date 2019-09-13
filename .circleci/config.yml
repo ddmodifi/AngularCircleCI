@@ -1,17 +1,80 @@
 version: 2
+# orbs:
+  # aws-s3: circleci/aws-s3@1.0.11
 jobs:
+  # the build job
   build:
     working_directory: ~/my-project
     docker:
       - image: circleci/node:8-browsers
     steps:
       - checkout
+      # pull node_modules from cache
       - restore_cache:
           key: AngularCircleCI-{{ .Branch }}-{{ checksum "package.json" }}
       - run: npm install
+      # cache the node_modules
       - save_cache:
           key: AngularCircleCI-{{ .Branch }}-{{ checksum "package.json" }}
           paths:
             - "node_modules"
       - run: npm run test -- --watch=false --progress=false --browsers=ChromeHeadlessCI
       - run: npm run e2e -- --protractor-config=./e2e/protractor-ci.conf.js
+      # build the project
+      - run:
+          name: Building
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "dev" ]; then
+                  npm run build-dev
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+                  npm run build-prod
+            else
+                  npm run build-dev
+            fi
+      # cache dist folder for deploy job
+      - save_cache:
+          key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - dist
+  # the deploy job
+  deploy:
+    working_directory: ~/my-project
+    docker:
+      - image: circleci/node:8-browsers
+    steps:
+      - restore_cache:
+          key: AngularCircleCI-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Install AWS CLI
+          command: sudo apt-get -y -qq install awscli
+      - run: 
+          name: Deploy to s3
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "dev" ]; then
+                  aws s3 sync dist s3://modifi-denise-test --delete
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+                  aws s3 sync dist s3://modifi-denise-test --delete
+            else
+                  aws s3 sync dist s3://modifi-denise-test --delete
+            fi
+  #     - run: 
+  #         name: Invalidate cache
+  #         command: aws cloudfront create-invalidation --distribution-id S11A16G5KZMEQD \
+  # --paths /index.html /error.html
+workflows:
+  version: 2
+  # the build and deploy workflow
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            # require build to pass before we can deploy
+            - build
+          filters:
+            branches:
+                only:
+                  # only run on dev and master branches
+                  - dev
+                  - master
+  
