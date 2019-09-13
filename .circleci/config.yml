@@ -51,11 +51,11 @@ jobs:
           name: Deploy to s3
           command: |
             if [ "${CIRCLE_BRANCH}" == "dev" ]; then
-                  aws s3 sync dist s3://modifi-denise-test --delete
+                  aws --region us-west-2 s3 sync dist s3://modifi-denise-test --delete
             elif [ "${CIRCLE_BRANCH}" == "master" ]; then
-                  aws s3 sync dist s3://modifi-denise-test --delete
+                  aws --region us-west-2 s3 sync dist s3://modifi-denise-test --delete
             else
-                  aws s3 sync dist s3://modifi-denise-test --delete
+                  aws --region us-west-2 s3 sync dist s3://modifi-denise-test --delete
             fi
   #     - run: 
   #         name: Invalidate cache
