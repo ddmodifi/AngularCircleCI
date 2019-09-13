@@ -47,9 +47,7 @@ jobs:
       - aws-s3/sync:
           from: 'dist'
           to: 's3://modifi-denise-test'
-          arguments: |
-            --region use-west-2 \
-            --delete
+          arguments: --delete
       # - run:
       #     name: Install AWS CLI
       #     command: sudo apt-get -y -qq install awscli
