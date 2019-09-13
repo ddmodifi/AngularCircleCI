@@ -25,11 +25,11 @@ jobs:
           name: Building
           command: |
             if [ "${CIRCLE_BRANCH}" == "dev" ]; then
-                  ng build --env dev
+                  npm run build-dev
             elif [ "${CIRCLE_BRANCH}" == "master" ]; then
-                  ng build --env prod
+                  npm run build-prod
             else
-                  ng build --env dev
+                  npm run build-dev
             fi
       # cache dist folder for deploy job
       - save_cache:
